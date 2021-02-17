@@ -1,0 +1,245 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper1
+  namespace: develop
+  labels:
+    name: zookeeper1
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      name: zookeeper1
+  template:
+    metadata:
+      labels:
+        name: zookeeper1
+    spec:
+      containers:
+      - name: zookeeper1
+        image: zookeeper:3.0
+        imagePullPolicy: Always
+        env:
+        - name: ZOO_SERVER_ID
+          value: "1"
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        - name: ZOO_SERVERS
+          value: "0.0.0.0:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888"
+        - name: ZOO_HEAP_SIZE
+          value: "512"
+        resources:
+          requests:
+            memory: 500Mi
+            cpu: 200m
+          limits:
+            memory: 1Gi
+            cpu: 500m
+        livenessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 300
+        readinessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 30
+          failureThreshold: 5
+        ports:
+        - containerPort: 2181
+          name: zookeeper2181
+        - containerPort: 2888
+          name: zookeeper2888
+        - containerPort: 3888
+          name: zookeeper3888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper2
+  namespace: develop
+  labels:
+    name: zookeeper2
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      name: zookeeper2
+  template:
+    metadata:
+      labels:
+        name: zookeeper2
+    spec:
+      containers:
+      - name: zookeeper2
+        image: zookeeper:3.0
+        imagePullPolicy: Always
+        env:
+        - name: ZOO_SERVER_ID
+          value: "2"
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        - name: ZOO_SERVERS
+          value: "zookeeper1:2888:3888,0.0.0.0:2888:3888,zookeeper3:2888:3888"
+        - name: ZOO_HEAP_SIZE
+          value: "512"
+        resources:
+          requests:
+            memory: 500Mi
+            cpu: 200m
+          limits:
+            memory: 1Gi
+            cpu: 500m
+        livenessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 300
+        readinessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 30
+          failureThreshold: 5
+        ports:
+        - containerPort: 2181
+          name: zookeeper2181
+        - containerPort: 2888
+          name: zookeeper2888
+        - containerPort: 3888
+          name: zookeeper3888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper3
+  namespace: develop
+  labels:
+    name: zookeeper3
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      name: zookeeper3
+  template:
+    metadata:
+      labels:
+        name: zookeeper3
+    spec:
+      containers:
+      - name: zookeeper3
+        image: zookeeper:3.0
+        imagePullPolicy: Always
+        env:
+        - name: ZOO_SERVER_ID
+          value: "3"
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        - name: ZOO_SERVERS
+          value: "zookeeper1:2888:3888,zookeeper2:2888:3888,0.0.0.0:2888:3888"
+        - name: ZOO_HEAP_SIZE
+          value: "512"
+        resources:
+          requests:
+            memory: 500Mi
+            cpu: 200m
+          limits:
+            memory: 1Gi
+            cpu: 500m
+        livenessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 300
+        readinessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 30
+          failureThreshold: 5
+        ports:
+        - containerPort: 2181
+          name: zookeeper2181
+        - containerPort: 2888
+          name: zookeeper2888
+        - containerPort: 3888
+          name: zookeeper3888
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper1
+  namespace: develop
+  labels:
+    name: zookeeper1
+spec:
+  selector:
+    name: zookeeper1
+  ports:
+  - name: zookeeper2181
+    port: 2181
+    protocol: TCP
+  - name: zookeeper2888
+    port: 2888
+    protocol: TCP
+  - name: zookeeper3888
+    port: 3888
+    protocol: TCP
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper2
+  namespace: develop
+  labels:
+    name: zookeeper2
+spec:
+  selector:
+    name: zookeeper2
+  ports:
+  - name: zookeeper2181
+    port: 2181
+    protocol: TCP
+  - name: zookeeper2888
+    port: 2888
+    protocol: TCP
+  - name: zookeeper3888
+    port: 3888
+    protocol: TCP
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper3
+  namespace: develop
+  labels:
+    name: zookeeper3
+spec:
+  selector:
+    name: zookeeper3
+  ports:
+  - name: zookeeper2181
+    port: 2181
+    protocol: TCP
+  - name: zookeeper2888
+    port: 2888
+    protocol: TCP
+  - name: zookeeper3888
+    port: 3888
+    protocol: TCP
+  clusterIP: None
